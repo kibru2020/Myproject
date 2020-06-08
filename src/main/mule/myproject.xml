@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="1cf70bcc-ec02-421c-9391-bfb7a18d315e" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="e19cd62e-c824-4859-8310-5b4f05686492" >
+		<http:request-connection host="localhost" port="8081" />
+	</http:request-config>
+	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="0485e85a-74ef-4ebe-b7cf-3a5d568065de" >
+		<email:smtp-connection host="smtp.gmail.com" port="587" user="kibru.mic19@gmail.com" password="Zemen123" >
+			<email:properties >
+				<email:property key="mail.smtp.starttls.enable" value="true" />
+			</email:properties>
+		</email:smtp-connection>
+	</email:smtp-config>
+	<flow name="helloFlow" doc:id="dfa003f0-936d-4396-b7a1-1f0ecde7b27a" >
+		<http:listener doc:name="GET /hello" doc:id="5faba74c-c1de-4167-a0e6-ec5acd5a7274" config-ref="HTTP_Listener_config" path="/hello" allowedMethods="GET">
+			<http:response >
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"fName" : vars.firstName
+}]]]></http:headers>
+			</http:response>
+		</http:listener>
+		<set-variable value="#[message.attributes.queryParams.fName]" doc:name="Set Variable" doc:id="d1a861c4-dc7f-48ea-8273-51abc968a220" variableName="firstname"/>
+		<set-payload value="hello" doc:name="hello" doc:id="4834d307-7769-418c-9302-3c97e3713f8c" />
+		<http:request method="GET" doc:name="GET /goodbye" doc:id="390a03fc-f22c-409d-8e3b-51969601892e" config-ref="HTTP_Request_configuration" path="/goodbye">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"fname" : "kibru"
+}]]]></http:query-params>
+		</http:request>
+		<logger level="INFO" doc:name="Logger" doc:id="d0857e3b-3a1b-4495-99fd-9d0ce4a1b62d" message="#[payload]"/>
+	</flow>
+	<flow name="goodbyeFlow" doc:id="49dc87a0-c941-4ec5-872c-4a4676860f2c" >
+		<http:listener doc:name="GET /goodbye" doc:id="b3eb6cb2-f982-4274-a0f0-ff34db675b90" config-ref="HTTP_Listener_config" path="/goodbye" allowedMethods="GET"/>
+		<email:send doc:name="Send" doc:id="5d99e41c-d3cb-4567-8f51-de5c5b93815d" config-ref="Email_SMTP" fromAddress="kibru.mic19@gmail.com" subject="Email from MULE 4">
+			<email:to-addresses >
+				<email:to-address value="kibru.mic19@gmail.com" />
+			</email:to-addresses>
+		</email:send>
+		<set-payload value="email sent" doc:name="goodbye" doc:id="58814765-8a5f-4680-a567-55ba9259113e" />
+	</flow>
+</mule>
